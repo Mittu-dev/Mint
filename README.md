@@ -59,14 +59,12 @@ mover el compilado y darle permisos
 Compilar el contenido de [CoreServer](https://github.com/HaruMitzuVT/Mint/tree/main/CoreServer) en Bun
 ```
     bun build main.js --compile --target=bun-linux-x64 --outfile dist/bridge
-
 ```
 mover el compilado y darle permisos
 ```bash 
     cp $WORKING_DIRECTORY/dist/bridge /opt/MintBridge/bridge
     chmod +x /opt/MintBridge/bridge
     chmod -R 777 /opt/MintBridge/
-
 ```
 Crear el servicio del bridge
 ```bash 
@@ -134,7 +132,6 @@ cp $WORKING_DIRECTORY/dist/updater /opt/updater
     chmod +x updater
 
     # Esto ya es experimental y no me hago responsable si llega a borrar la instalacion entera
-
 ```
 
 ## Licencia
