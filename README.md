@@ -28,13 +28,14 @@ Instalacion de **Arch Linux (Minimal)** con las siguientes dependencias
 - gtk3 
 
 Si no quieres sacrificar tu equipo recomiendo el uso de una VM.
-* [ArchLinux](https://archlinux.org/download/#download-mirrors)
-* [ArchLiux Direct Mirror](https://mirrors.edge.kernel.org/archlinux/iso/2025.12.01/)
-
 * [Virtualbox](https://www.virtualbox.org/)
 * [VMWare](https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion)
 * [KVM linux](https://linux-kvm.org/page/Main_Page)
 * [QEMU](https://www.qemu.org/download/)
+
+Descarga de **Arch Linux**
+* [Arch Linux](https://archlinux.org/download/#download-mirrors)
+* [Arch Liux Direct Mirror](https://mirrors.edge.kernel.org/archlinux/iso/2025.12.01/)
 ---
 
 ## Instalación
