@@ -1,3 +1,4 @@
+![Nova Mint OS](https://raw.githubusercontent.com/HaruMitzuVT/Mint/refs/heads/main/docs/banner.png)
 # Linux Mod
 
 Este directorio existe para Ayudar a crear una "Distro" de linux basada en **Arch Linux**
@@ -5,14 +6,6 @@ Este directorio existe para Ayudar a crear una "Distro" de linux basada en **Arc
 ---
 
 ## Contenido
-
-### Imágenes
-
-- Recursos visuales usados en el README principal.
-- Principalmente banners, capturas o material ilustrativo.
-- No representan necesariamente el estado actual del sistema.
-
----
 
 ### Archivos de configuración
 
