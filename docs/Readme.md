@@ -1,3 +1,4 @@
+![Nova Mint OS](https://raw.githubusercontent.com/HaruMitzuVT/Mint/refs/heads/main/docs/banner.png)
 # Docs
 
 Este directorio existe para contener recursos de apoyo al proyecto
