@@ -118,7 +118,7 @@ dic 13 18:55:49 mint bridge[6312]: Mint System ADDONS → /opt/Mint/home/addons
 ```
 
 ## Licencia
-GNU GPL v3
+Apache-2.0 license [View here](https://www.apache.org/licenses/LICENSE-2.0.txt)
 
 ## Notas
 
