@@ -3,7 +3,6 @@ import { WDM } from "../CloudBase.js"; // igual que en Terminal
 import { CommandManager } from "./Terminal.js"
 import { Journal } from "../Journal.js";  
 
-
 class NovaMusic{
   constructor(){
     this.music = null;
@@ -15,7 +14,6 @@ class NovaMusic{
       height: 700,
       icon: 'Assets/Beta/music.png'
     };
-    this.Init();
   }
 
   async Init(){

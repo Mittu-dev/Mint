@@ -579,12 +579,15 @@ async function executeCommand(commandLine) {
 
         if (command) {
             try {
-                const result = command.execute(args);
-                history.add([commandName, ...args].join(' '));
-                if (result === false || result === null || typeof result === 'undefined') {
-                    return result === false ? `Command "${commandName}" failed.` : '';
-                }
-                outputs.push(String(result));
+                const result = await Promise.resolve(command.execute(args));
+history.add([commandName, ...args].join(' '));
+
+if (result === false || result === null || typeof result === 'undefined') {
+    return result === false ? `Command "${commandName}" failed.` : '';
+}
+
+outputs.push(String(result));
+
             } catch (err) {
                 return `Error executing "${commandName}": ${err && err.message ? err.message : err}`;
             }
