@@ -289,11 +289,3 @@ Diseñado para entornos **appliance / OS-like**.
 ```
 
 ---
-
-## Notas Finales
-
-- Single-file runtime
-- Headless
-- Compatible con systemd
-- Pensado para boot automático
-- UI completamente desacoplada
