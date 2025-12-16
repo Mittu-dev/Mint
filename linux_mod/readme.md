@@ -54,7 +54,6 @@ ID_LIKE=arch # Deja esto asi o preparate para sufrir
 
 # verifica
 cat /etc/os-release
-
 ```
 
 4. editamos ```hostname```
@@ -65,7 +64,6 @@ sudo hostnamectl set-hostname nova-mint
 # verifica
 lsb_release -a 
 hostnamectl
-
 ```
 
 5. editamos ```TTY```
@@ -77,10 +75,9 @@ sudo nano /etc/issue
 Nova Mint Linux \n \l
 
 # En caso de usar un Display Manager eso es opcional.
-
 ```
 
-Nota: Esto mantiene los repos oficiales de pacman. En caso de incluir tu propio repositorio hacer lo siguiente:
+Nota: Esto mantiene los repos oficiales de pacman. En caso de incluir tu propio repositorio hacer lo siguiente.
 6. editamos ```/etc/pacman.conf```
 
 ``` 
@@ -92,7 +89,6 @@ sudo nano /etc/pacman.conf
 [myCustomRepo]
 SigLevel = Optional TrustAll
 Server = https://repo.myserver.org/$arch
-
 ```
 
 Comprobacion final

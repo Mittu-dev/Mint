@@ -1,12 +1,12 @@
 // Singapura Package Loader
 import { Terminit } from './prgm/Terminal.js';
-import { initSnapMusicMinimal } from './prgm/Music.js';
+import { NovaMusic } from './prgm/Music.js';
 import { Journal } from "./Journal.js";
 
 async function SPL() {
     try {
         Terminit();
-        initSnapMusicMinimal();
+        new NovaMusic();
         Journal.add("[SPL] Singapura Package Loader initialized successfully.");
     } catch (error) {
         Journal.add(`[SPL] Initialization Error: ${error.message}`);

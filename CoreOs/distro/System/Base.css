@@ -14,16 +14,7 @@
 }
 
 
-/* Base Helper */
-span.dev {
-    width: 300px;
-    position: absolute;
-    top: 2vh;
-    right: 1vw;
-    margin: 1em;
-    text-shadow: 2px 2px 4px #000000a6;
-    z-index: -1;
-}
+/* Base Helper */ 
 .hidden{
     display: none !important;
 }

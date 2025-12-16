@@ -1,193 +1,308 @@
-// SnapMusic.WebView.min.js
+// Nova Music
 import { WDM } from "../CloudBase.js"; // igual que en Terminal
 import { CommandManager } from "./Terminal.js"
+import { Journal } from "../Journal.js";  
 
-const PWA = {
-  id: 'snap-music',
-  title: 'Snap Music',
-  url: `https://192.168.1.254/Online/SMusic/`,
-  width: 1550,
-  height: 850,
-  icon: 'Assets/Beta/music.png'
-};
 
-function createSnapMusicAPI() {
-  return Object.freeze({
-    Mixer: {
-      getMasterVol: CORE.Mixer.getMasterVol,
-      setMasterVol: CORE.Mixer.setMasterVol,
-      getDeviceVol: CORE.Mixer.getDeviceVol,
-      setDeviceVol: CORE.Mixer.setDeviceVol
-    },
+class NovaMusic{
+  constructor(){
+    this.music = null;
+    this.musicFiles = [];
+    this.config = {
+      id: 'Music',
+      title: 'Nova Music',
+      width: 1200,
+      height: 700,
+      icon: 'Assets/Beta/music.png'
+    };
+    this.Init();
+  }
 
-    MixerTray: {
-      show: CORE.MixerTray.show,
-      hide: CORE.MixerTray.hide,
-      updateIcon: CORE.MixerTray.updateIcon
-    },
+  async Init(){
+    Journal.add("[Nova Music] Initializing Nova Music Application...");
+    this.music = new WDM(this.config);
+    CORE.CORE_DOCK.addApp(this.config.name, this.config.icon, this.music);
+    this.music.minimizeWindow();
+    this.registerTerminalCommand();
+    await this.startIndex();
+    this.inyectCSS();
+    this.createUI();
+  }
 
-    Journal: {
-      add: CORE.Jounal.add,
-      load: CORE.Jounal.load
+  async startIndex(){
+    Journal.add("[Nova Music] Indexing Music Files...");
+    const DefaultFolder = '/Home/Music';
+    const exists = await CORE.fs.exists('home/Music');
+    if(!exists){
+      Journal.add("[Nova Music] Music folder not found. Creating default Music folder...");
+      await CORE.fs.mkdir('home/Music');
     }
-  });
-}
+    Journal.add("[Nova Music] Loading music files from Music folder...");
+    const files = await CORE.fs.readdir(DefaultFolder);   
+    this.musicFiles = files;
+  }
 
+  renderMusicCards(){
+    Journal.add("[Nova Music] Rendering music files...");
+    if(!this.musicFiles.length){
+      Journal.add("[Nova Music] No music files found in Music folder.");
+      return;
+    };
+    const grid = this.music.window.querySelector('.music-grid');
+    grid.innerHTML = '';
+    this.musicFiles.forEach(file => {
+      const card = document.createElement('div');
+      card.classList.add('music-card');
+      grid.appendChild(card);
+    });
+    Journal.add("[Nova Music] Music files rendered successfully.");
+  }
 
-let _win = null;      // WDM-like window
-let _webview = null;  // CORE.SnapSDK.WebView instance or iframe element
+  open(){
+    this.music.restoreWindow();
+  }
 
-function _createWindow(cfg = {}) {
-  const conf = Object.assign({
-    id: cfg.id || `${PWA.id}-${Date.now()}`,
-    name: cfg.name || PWA.title,
-    left: cfg.left || 160,
-    top: cfg.top || 120,
-    width: cfg.width || PWA.width,
-    height: cfg.height || PWA.height,
-    icon: cfg.icon || PWA.icon,
-    startMinimized: !!cfg.startMinimized
-  }, cfg);
+  kill(){
+    this.music.closeWindow();
+  }
 
-  if (typeof WDM !== 'undefined') {
-    return new WDM({
-      id: conf.id,
-      name: conf.name,
-      left: conf.left,
-      top: conf.top,
-      width: conf.width,
-      height: conf.height,
-      icon: conf.icon,
-      startMinimized: conf.startMinimized
+  registerTerminalCommand(){
+    Journal.add("[Nova Music] Registering terminal command 'music' to launch Nova Music Application...");
+    CommandManager.register('music', 'Launch Nova Music Application', () => {
+      this.open();
     });
   }
-
-  // fallback minimal window (DOM)
-  const el = document.createElement('div');
-  el.className = 'window fallback-window';
-  el.id = conf.id;
-  Object.assign(el.style, {
-    position: 'absolute',
-    left: `${conf.left}px`,
-    top: `${conf.top}px`,
-    width: `${conf.width}px`,
-    height: `${conf.height}px`,
-    zIndex: 1000,
-    background: '#000',
-    color: '#fff',
-    overflow: 'hidden'
-  });
-  el.innerHTML = `<div class="window-titlebar" style="padding:6px;background:#111;color:#fff;">${conf.name}</div><div class="window-content" style="height:calc(100% - 34px);"></div>`;
-  (document.querySelector('.appContainer') || document.body).appendChild(el);
-
-  const inst = {
-    container: el,
-    setContent(htmlOrNode) {
-      const content = el.querySelector('.window-content');
-      if (!content) return;
-      if (typeof htmlOrNode === 'string') content.innerHTML = htmlOrNode;
-      else { content.innerHTML = ''; content.appendChild(htmlOrNode); }
-    },
-    minimizeWindow() { try { this.container.style.display = 'none'; this.isMinimized = true; } catch (e) {} },
-    restoreWindow() { try { this.container.style.display = 'block'; this.isMinimized = false; } catch (e) {} },
-    closeWindow({ destroy = false } = {}) { try { this.container.style.display = 'none'; if (destroy) this.container.remove(); } catch (e) {} },
-    bringToFront() { try { const all = document.querySelectorAll('.window, .fallback-window'); let max = 0; all.forEach(n=>max=Math.max(max, parseInt(n.style.zIndex)||0)); this.container.style.zIndex = max+1; } catch(e){} },
-    destroy() { try { this.container.remove(); } catch(e){} },
-    isMinimized: conf.startMinimized
-  };
-  return inst;
+  
+  inyectCSS(){
+    Journal.add("[Nova Music] Injecting custom CSS for Nova Music...");
+    const style = document.createElement('style');
+    style.textContent = `
+* {
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
 }
 
-function _createWebViewInside(hostEl) {
-  // Prefer CORE.SnapSDK.WebView
-  try {
-    if (typeof CORE !== 'undefined' && CORE.SnapSDK && typeof CORE.SnapSDK.WebView === 'function') {
-      const cfg = { initialUrl: PWA.url, showControls: false, allowNavigation: true };
-      const wv = new CORE.SnapSDK.WebView(cfg);
-      wv.executeScript(`window.Core = ${CORE};`)
-      // Some WebView implementations expect a container element for render()
-      try { wv.render(hostEl); } catch (e) {
-        // If render appends elsewhere, try to move the element into hostEl
-        try {
-          if (wv.element && hostEl) {
-            hostEl.innerHTML = '';
-            hostEl.appendChild(wv.element);
-          }
-        } catch (_) {}
-      }
-      return { webview: wv, type: 'webview' };
-    }
-  } catch (e) {
-    // continue to iframe fallback
+.music-app {
+    height: 100%;
+    padding: 5px;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    color: #fff;
+}
+
+/* ───────── Header ───────── */
+
+.music-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.music-top h1 {
+    font-size: 2.6rem;
+    font-weight: 500;
+    margin-left: 1vw;
+    margin-top: 1vh;
+}
+
+.music-top input {
+    width: 280px;
+    padding: 10px 18px;
+    border-radius: 20px;
+    border: none;
+    outline: none;
+    background: rgb(97 97 97 / 26%);
+    color: white;
+}
+
+/* ───────── Grid ───────── */
+
+.music-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 28px;
+  padding-bottom: 140px;
+}
+
+.music-card {
+    aspect-ratio: 4 / 3;
+    background: rgb(101 101 101 / 35%);
+    border-radius: 28px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.45);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.music-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 28px 70px rgba(0,0,0,.6);
+}
+
+/* ───────── Player ───────── */
+
+.music-player {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: 24px;
+    height: 90px;
+    background: rgb(23 23 23 / 85%);
+    backdrop-filter: blur(18px);
+    border-radius: 26px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    padding: 0 24px;
+    box-shadow: 0 22px 60px rgba(0,0,0,.6);
+    justify-items: center;
+}
+
+/* Meta */
+
+.player-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.player-meta img {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+}
+
+.meta-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.meta-text .song {
+  font-weight: 600;
+}
+
+.meta-text .artist {
+  opacity: .7;
+  font-size: .9rem;
+}
+
+/* Center */
+
+.player-center {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 11px;
+    background: #81818126;
+    border-radius: 17px;
+}
+
+.controls {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.controls .material-icons {
+    font-size: 2.2rem;
+    cursor: pointer;
+    opacity: .9;
+    transition: transform .15s ease;
+    font-family: 'Material Icons';
+}
+
+.controls .play {
+  font-size: 2.8rem;
+}
+
+.controls .material-icons:hover {
+  transform: scale(1.15);
+  opacity: 1;
+}
+
+/* Seek */
+
+.seek {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: .85rem;
+    opacity: .85;
+    height: fit-content;
+    margin-top: 1vh;
+}
+
+.seek input {
+  width: 260px;
+}
+
+/* Volume */
+
+.player-volume {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-volume input {
+  width: 90px;
+}
+    `;
+    document.head.appendChild(style);
   }
 
-  // fallback iframe
-  const iframe = document.createElement('iframe');
-  window.sMusic= iframe;
-  iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups';
-  iframe.style.cssText = 'width:100%;height:100%;border:0;background:#000;';
-  iframe.src = PWA.url;
-  hostEl.innerHTML = '';
-  hostEl.appendChild(iframe);
-  return { webview: iframe, type: 'iframe' };
+  createUI(){
+    Journal.add("[Nova Music] Creating User Interface...");
+    const Layout = `
+<div class="music-app">
+
+  <!-- Top bar -->
+  <header class="music-top">
+    <h1>Music</h1>
+    <input type="search" placeholder="Search Music">
+  </header>
+
+  <!-- Grid -->
+  <section class="music-grid">
+  </section>
+
+  <!-- Player -->
+  <footer class="music-player">
+    <div class="player-meta">
+      <img src="Assets/Beta/music.png" alt="Album Art">
+      <div class="meta-text">
+        <span class="song"></span>
+        <span class="artist"></span>
+      </div>
+    </div>
+
+    <div class="player-center">
+      <div class="controls">
+        <span class="material-icons">skip_previous</span>
+        <span class="material-icons play">play_arrow</span>
+        <span class="material-icons">skip_next</span>
+      </div>
+
+      <div class="seek">
+        <span0:00</span>
+        <input type="range" min="0" max="100" value="0">
+        <span></span>
+      </div>
+    </div>
+
+    <div class="player-volume">
+      <span class="material-icons tray">volume_up</span>
+      <input type="range" min="0" max="100" value="100">
+    </div>
+  </footer>
+
+</div>
+
+    `
+    this.music.setContent(Layout);
+    Journal.add("[Nova Music] User Interface created successfully.");
+    this.renderMusicCards();
+    Journal.add("[Nova Music] Nova Music Application is ready to use.");
+  } 
 }
 
-/**
- * initSnapMusicMinimal()
- * - idempotente: si ya existe retorna la ventana existente
- * - solo pone un WebView/iframe en la ventana
- */
-function initSnapMusicMinimal() {
-  if (_win) return _win;
-
-  _win = _createWindow({ id: PWA.id, name: PWA.title, width: PWA.width, height: PWA.height, icon: PWA.icon });
-  // prepare host container inside window
-  const contentEl = (_win.container && _win.container.querySelector('.window-content')) || (function(){
-    // create if missing
-    const c = document.createElement('div'); c.className = 'window-content'; c.style.height = '100%';
-    if (_win.container) { _win.container.appendChild(c); }
-    return c;
-  })();
-
-  // create webview/iframe inside content
-  const wvObj = _createWebViewInside(contentEl);
-  _webview = wvObj.webview;
-
-  // expose minimal helpers
-  try { window.SnapMusicPlayer = { win: _win, webview: _webview }; } catch(e){}
-
-  _win.minimizeWindow();
-  CORE.CORE_DOCK.addApp(PWA.id, PWA.icon, _win)
-
-  CommandManager.register('music', 'Run Snap Music', SnapMusicConsole)
-
-  document.querySelector('#snap-music').style.width = '1550px !important';
-  document.querySelector('#snap-music').style.height = '850px !important';
-  return _win;
-}
-
-/* show/open helper */
-function SnapMusicOpenMinimal() {
-  const w = initSnapMusicMinimal();
-  if (!w) return;
-  try {
-    if (typeof w.restoreWindow === 'function') w.restoreWindow();
-    if (typeof w.bringToFront === 'function') w.bringToFront();
-    // Neo/WDM render step if exists
-    if (typeof w.render === 'function') {
-      try { w.render(document.querySelector('#desktop') || document.querySelector('.desktop') || document.body); } catch (e) { /* ignore */ }
-    }
-  } catch (e) {}
-}
-
-function SnapMusicConsole(args){
-    let JounalLog = '[SMusic] Executing in console (Beta)';
-    document.querySelector('.snap-music').click();
-    CommandManager.executeCommand('echo', JounalLog);
-    CORE.Jounal.add(JounalLog, 5);
-    CORE.Jounal.load();
-}
-
-/* exports */
-export { initSnapMusicMinimal, SnapMusicOpenMinimal };
-export default { initSnapMusicMinimal, SnapMusicOpenMinimal };
+export { NovaMusic };

@@ -6,6 +6,7 @@ import { AccountManager, UAC, Userinit, AccountService } from "./Accounts.js";
 import { Journal } from "./Journal.js";
 import { SPL } from "./PKG.js";
 import { Mixer, MixerUI } from "./Mixer.js";
+import { FileSystem } from "./Filesystem.js";
 
 
 
@@ -14,8 +15,6 @@ const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 
 // Configuración de endpoints (placeholders / dev)
-const CORE_API_BASE = `https://192.168.1.254/DataCenter/Core`;
-const CORE_WALLPAPER = `https://192.168.1.254/Services/Daydream/api`;
 
 
 // System Wire
@@ -33,7 +32,6 @@ let MixerTray;
 let CS_API = {
     CORE_DOCK,
     CORE_WDM,
-    CORE_WALLPAPER,
     Snap,
     SnapSDK,
     Journal,
@@ -41,7 +39,8 @@ let CS_API = {
     MixerTray,
     Mixer,
     Services,
-    AccountService
+    AccountService,
+    Storage
 };
 
 // Helpers
@@ -83,8 +82,13 @@ async function Boot() {
         $('.CM-login').style.opacity = '1';
         $('.CM-login').style.pointerEvents = 'unset';
         $('.CM-login').classList.add('animate-zoomIn');
-        window.CORE.ACM = AccountManager;
         attachLoginHandlers();
+        SECloud = new SecurityModule(CORE_SECURITY_POLICY);
+        SECloud.Bind(UAC, 'uac');
+        SECloud.Bind(Userinit, 'Users');
+        SECloud.Bind(AccountManager, 'NovaAccounts');
+        Storage = new FileSystem();
+        await Storage.init();
     } catch (error) {
         SystemPanic.trigger('SERVICE_LOAD_FAIL');
         Journal.add(`[System] Boot error: ${error.message}`, 2);
@@ -125,10 +129,6 @@ function attachLoginHandlers() {
 
 async function Services() {
     try {
-        SECloud = new SecurityModule(CORE_SECURITY_POLICY);
-        SECloud.Bind(UAC, 'uac');
-        SECloud.Bind(Userinit, 'Users');
-        SECloud.Bind(AccountManager, 'NovaAccounts');
         const mx = document.querySelector('.mixer-dock');
         MixerTray = new MixerUI({
             root: mx

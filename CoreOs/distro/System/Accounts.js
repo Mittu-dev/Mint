@@ -4,9 +4,6 @@ import * as System from "./CloudBase.js";
 import * as Snap from "../Snap/Snap.js";
 import * as SnapSDK from "../Snap/SnapUX.js";
 let CORE_SECURITY_POLICY = {};
-const CORE_API_BASE = `https://192.168.1.254/`;
-const CORE_ACCOUNTS = `${CORE_API_BASE}DataCenter/Core`
-const CORE_API_LOGIN = `${CORE_ACCOUNTS}?cwd=SignUI`;
 let Enforcer;
 // Helper DOM
 
@@ -65,14 +62,7 @@ class AccountService{
     static LocalUser = {};
 
     static async init(){
-        const probe = await isServerAlive(CORE_API_BASE);
-        if(probe){
-            AccountService.OnlineSignUp = true;
-            Journal.add('[Nova Accounts] online SingnUp available ')
-        }else{
-            AccountService.CheckLocaluserExist();
-            Journal.add('[Nova Accounts] online SingnUp unavailable, Using Local Accounts')
-        }
+        AccountService.CheckLocaluserExist();
         AccountService.load();
     }
 
@@ -89,12 +79,7 @@ static load(){
     }
 
     static async SignIn(data1, data2){
-        //Dinamic pipe
-        if(AccountService.OnlineSignUp){
-            await AccountService.OnlineLogin(data1, data2)
-        }else{
-            AccountService.OfflineSignup(data1, data2);
-        }
+        AccountService.OfflineSignup(data1, data2);
     }
     
 static CheckLocaluserExist(){
@@ -102,46 +87,6 @@ static CheckLocaluserExist(){
     if (!data || Object.keys(data).length === 0) {
         AccountService.RegisterlocalAccount();
     }
-}
-
-
-static async OnlineLogin(username, password){
-    let CM;
-
-    try {
-        CM = await XServe(CORE_API_LOGIN, { username, password });
-    } catch (e) {
-        SnapSDK.Snackbar.show({
-            type: "error",
-            message: "Network or server error"
-        });
-        return;
-    }
-
-    if (!CM || isEmpty(CM) || !CM.session) {
-        SnapSDK.Snackbar.show({
-            type: "error",
-            message: "Invalid server response"
-        });
-        return;
-    }
-
-    // 🔧 Normalizar payload
-    const payload = {
-        user: CM.user ?? {
-            username: username,
-            displayName: username
-        },
-        session: CM.session
-    };
-
-    AccountManager.Login(payload);
-
-    Snap.Scheduler.delay(() => {
-        if (window.CORE?.Services) {
-            CORE.Services();
-        }
-    }, 2000);
 }
 
 static async OfflineSignup(user, password){

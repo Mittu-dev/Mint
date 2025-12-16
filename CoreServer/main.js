@@ -228,6 +228,16 @@ app.get('/fs/list', (req, res) => {
   } catch (e) { jsonError(res, e); }
 });
 
+app.get('/fs/readdir', (req, res) => {
+  try {
+    const dir = safePath(req.query.dir || '');
+    const entries = fs.readdirSync(dir);
+    res.json(entries);
+  } catch (e) {
+    jsonError(res, e);
+  }
+});
+
 app.post('/fs/read', (req, res) => {
   try {
     const file = safePath(req.body.path);
@@ -249,6 +259,36 @@ app.post('/fs/delete', (req, res) => {
     fs.rmSync(target, { recursive: true, force: true });
     res.json({ ok: true });
   } catch (e) { jsonError(res, e); }
+});
+
+app.post('/fs/mkdir', (req, res) => {
+  try {
+    const dir = safePath(req.body.path);
+    fs.mkdirSync(dir, { recursive: true });
+    res.json({ ok: true });
+  } catch (e) {
+    jsonError(res, e);
+  }
+});
+
+app.post('/fs/rename', (req, res) => {
+  try {
+    const from = safePath(req.body.from);
+    const to   = safePath(req.body.to);
+    fs.renameSync(from, to);
+    res.json({ ok: true });
+  } catch (e) { jsonError(res, e); }
+});
+
+app.post('/fs/rename', (req, res) => {
+  try {
+    const from = safePath(req.body.from);
+    const to   = safePath(req.body.to);
+    fs.renameSync(from, to);
+    res.json({ ok: true });
+  } catch (e) {
+    jsonError(res, e);
+  }
 });
 
 /* Commands */

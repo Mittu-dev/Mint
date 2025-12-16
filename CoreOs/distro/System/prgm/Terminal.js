@@ -380,8 +380,14 @@ function Terminit() {
 
     let getUser;
     CORE.SE.modFunc('NovaAccounts', 'getCurrentUser', (e) =>{
-        getUser = e.username;
+        const User = e;
+        if(!User.username){
+            getUser = e.usename
+        } else {
+            getUser = User.username
+        }    
     })
+
 
     CurrentUser = `${getUser}@Core-Cloud`
 
