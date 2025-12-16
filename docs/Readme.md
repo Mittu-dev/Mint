@@ -1,4 +1,4 @@
-![Nova Mint OS]([https://raw.githubusercontent.com/HaruMitzuVT/Mint/refs/heads/main/docs/banner.png](https://raw.githubusercontent.com/Mittu-dev/Mint/refs/heads/main/docs/banner.png?token=GHSAT0AAAAAADQNY4HKKIWXVXZN2SIOTJJK2KBWNSQ))
+![Nova Mint OS](https://raw.githubusercontent.com/Mittu-dev/Mint/refs/heads/main/docs/banner.png?token=GHSAT0AAAAAADQNY4HKKIWXVXZN2SIOTJJK2KBWNSQ)
 # Docs
 
 Este directorio existe para contener recursos de apoyo al proyecto
