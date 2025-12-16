@@ -31,11 +31,11 @@ class NovaMusic{
 
   async startIndex(){
     Journal.add("[Nova Music] Indexing Music Files...");
-    const DefaultFolder = '/Home/Music';
+    const DefaultFolder = '/home/Music';
     const exists = await CORE.fs.exists('home/Music');
     if(!exists){
       Journal.add("[Nova Music] Music folder not found. Creating default Music folder...");
-      await CORE.fs.mkdir('home/Music');
+      await CORE.fs.mkdir(DefaultFolder);
     }
     Journal.add("[Nova Music] Loading music files from Music folder...");
     const files = await CORE.fs.readdir(DefaultFolder);   
