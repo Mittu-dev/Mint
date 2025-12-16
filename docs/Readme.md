@@ -1,8 +1,9 @@
-![Nova Mint OS](https://raw.githubusercontent.com/Mittu-dev/Mint/refs/heads/main/docs/banner.png?token=GHSAT0AAAAAADQNY4HKKIWXVXZN2SIOTJJK2KBWNSQ)
+![Nova Mint OS](https://raw.githubusercontent.com/Mittu-dev/Mint/main/docs/banner.png)
+
 # Docs
 
 Este directorio existe para contener recursos de apoyo al proyecto
-Nova Mint / Singapura que no pertenecen directamente al runtime... por ahora.
+Nova Mint que no pertenecen directamente al runtime... por ahora.
 
 No se garantiza que el contenido esté actualizado,
 completo o siquiera sea útil.
