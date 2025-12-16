@@ -1,4 +1,4 @@
-# Singapura Bridge – API Reference
+# Mint Bridge – API Reference
 
 Bridge headless que conecta la PWA con el sistema Linux (Arch-based),
 ejecutándose en modo appliance dentro de una VM.
