@@ -37,8 +37,8 @@ Devuelve información estática del sistema.
   "arch": "x64",
   "cpu": "Celeron N3060",
   "memory": 3828,
-  "hostname": "mittuserver",
-  "user": "pwa-bridge"
+  "hostname": "mint",
+  "user": "mint"
 }
 ```
 
