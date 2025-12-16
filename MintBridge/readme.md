@@ -1,11 +1,15 @@
-# Mint Bridge – API Reference
+# Mint Bridge – API Overview (Internal)
 
 Bridge headless que conecta la PWA con el sistema Linux (Arch-based),
 ejecutándose en modo appliance dentro de una VM.
 
-- Runtime: Node.js
+> ⚠️ Esta documentación describe el comportamiento actual del bridge.
+> No constituye un contrato ni garantiza estabilidad futura.
+> Endpoints, respuestas y efectos pueden cambiar o desaparecer sin aviso.
+
+- Runtime: Node.js compatible (Bun)
 - Comunicación: HTTP (JSON)
-- Scope FS: `/opt/${PWA}/home`
+- Scope FS: `/opt/Mint/home`
 - UI: PWA (única consumidora)
 - Trust model: Appliance / Kiosk
 
@@ -79,6 +83,7 @@ Estado dinámico del sistema en tiempo real.
 
 ### GET /health
 Health check simple del bridge.
+Uso interno / systemd / monitoring local.
 
 **Response**
 ```json
@@ -94,7 +99,7 @@ Health check simple del bridge.
 
 > Acceso TOTAL de lectura/escritura  
 > **Limitado estrictamente a:**  
-> `/opt/${PWA}/home`
+> `/opt/Mint/home`
 
 ---
 
@@ -208,7 +213,7 @@ Elimina archivo o directorio.
 
 Los addons viven en:
 ```
-/opt/${PWA}/home/addons
+/opt/Mint/home/addons
 ```
 
 Cada addon es una carpeta (git repo, paquete, etc).
@@ -274,14 +279,14 @@ Elimina un addon.
 - El bridge NO expone shell libre
 - El FS está sandboxed
 - `pacman` se ejecuta vía sudoers controlado
-- No se permite escape de `/opt/${PWA}/home`
+- No se permite escape de `/opt/Mint/home`
 
 Diseñado para entornos **appliance / OS-like**.
 
 ---
 
 ## Estados y Errores
-
+El formato de error no es estable y puede variar.
 ```json
 {
   "error": "Description"
