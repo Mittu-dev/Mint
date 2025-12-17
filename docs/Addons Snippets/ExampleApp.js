@@ -1,36 +1,117 @@
-// Singapura Create App
+// WebView Hello World App (API nueva)
+// Mint Example Addon
 
-// importar WDM del base 
-import { WDM } from '..CloudBase.js';
+class HelloWebApp {
+  constructor() {
+    this.window = null;
+    this.webview = null;
 
-// o usar de la API si no se haran WDM Custom
-const CoreWindow = CORE.CORE_WDM;
+    this.config = {
+      id: "webview",
+      name: "Mint WebView",
+      title: "Mint WebView",
+      width: 1000,
+      height: 700,
+      icon: "https://static.vecteezy.com/system/resources/previews/016/716/476/non_2x/internet-browser-icon-free-png.png",
 
-// Importar Gestor de iconos (TaskbarDocker)
-const iconMan = CORE.CORE_DOCK;
+      titleAlign: "center",
+      titleIcon: "https://static.vecteezy.com/system/resources/previews/016/716/476/non_2x/internet-browser-icon-free-png.png",
 
-// Configurar Ventana
-const WindowSettings = {
-    name: "Myapp",
-    left: 500,
-    top: 200,
-    width: 854,
-    height: 480,
-    icon: //path to icon (png or svg)
+      // Ejemplo de shortcut en titlebar
+      shortcuts: [
+        {
+          text: "↻",
+          title: "Reload",
+          onClick: () => this.reload()
+        }
+      ]
+    };
+  }
+
+  /* ─────────────────────────────
+   *  PUBLIC API (Taskbar / Launcher)
+   * ───────────────────────────── */
+
+  toggle() {
+    if (!this.window) {
+      this._create();
+      return;
+    }
+
+    if (this.window.isMinimized) {
+      this.window.restoreWindow();
+    } else {
+      this.window.minimizeWindow();
+    }
+  }
+
+  /* ─────────────────────────────
+   *  INTERNAL
+   * ───────────────────────────── */
+
+_create() {
+  this.window = new core.wdm.Current(this.config);
+
+  this.webview = new core.SnapSDK.WebView({
+    initialUrl: "https://example.com",
+    showControls: true,      // navegación visible
+    allowNavigation: true
+  });
+
+  const container = document.createElement("div");
+  container.style.width = "100%";
+  container.style.height = "100%";
+
+  this.webview.render(container);
+
+    this.window.setContent("");
+    this.window.getContent().appendChild(container);
+
+
+  // ── Bridge window → taskbar ──
+  this.window.onStateChange = (state) => {
+    core.taskbar.updateAppState("webview", state);
+
+    if (state === "closed") {
+      this._destroy();
+    }
+  };
+
+  core.taskbar.updateAppState("webview", "open");
 }
 
-// crear ventana y Registrar en el dock
-const MyWin = new CoreWindow(WindowSettings);
-iconMan.addApp(WindowSettings.name, WindowSettings.icon, MyWin);
 
-// Endpoints de la Api (CORE)
+  reload() {
+    if (this.webview) {
+      this.webview.reload();
+    }
+  }
 
-CORE_WDM // Getsor de ventanas
-CORE_DOCK // gestor de iconos de la barra de tareas
-CORE_WALLPAPER // Fondo actual
-Snap // UI Kit (Snap)
-SnapSDK // UI SDK Kit (Snap)
-Journal // Registros
-Network // Accesso a la red
-SE // Opciones de seguridad (SECore)
-Kernel // Acceso al Kernel (Cloudbase) (Si SECore esta en Enforced y true este endpoint estara desactivado)
+  _destroy() {
+    if (this.webview) {
+      this.webview.destroy();
+      this.webview = null;
+    }
+    this.window = null;
+  }
+}
+
+const helloWebApp = new HelloWebApp();
+
+core.taskbar.addApp({
+  id: "webview",
+  name: "Mint WebView",
+  icon: "https://static.vecteezy.com/system/resources/previews/016/716/476/non_2x/internet-browser-icon-free-png.png",
+  title: "Example",
+
+  executeType: "function",
+  execute: () => helloWebApp.toggle(),
+
+  windowType: "Modern",
+
+  thumbnailPreview: false,
+  mediaControl: false,
+
+  pinned: true,
+  category: "utilities"
+});

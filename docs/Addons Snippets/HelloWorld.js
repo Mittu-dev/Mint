@@ -1,26 +1,109 @@
-// Hello World App
+// Mint Example Addon
+// Simple Hello World App 
+class MyApp {
+  constructor() {
+    this.window = null;
 
-// usar la API WDM
-const CoreWindow = CORE.CORE_WDM;
+    this.config = {
+      id: "myapp-window",
+      name: "MyApp",
+      title: "My App",
+      width: 854,
+      height: 480,
+      icon: "Assets/Mint.png",
 
-// Importar Gestor de iconos (TaskbarDocker)
-const iconMan = CORE.CORE_DOCK;
+      // ── Titlebar options ──
+      titleAlign: "center",
+      titleIcon: "Assets/Mint.png",
 
-// Configurar Ventana
-const App = {
-    name: "Myapp",
-    left: 500,
-    top: 200,
-    width: 200,
-    height: 100,
-    icon: "https://icons.veryicon.com/png/o/application/a1/default-application.png"
+      shortcuts: [
+        {
+          icon: "https://cdn-icons-png.flaticon.com/512/189/189687.png",
+          title: "Refresh",
+          onClick: () => this.refresh()
+        },
+        {
+          icon: "https://static.wikia.nocookie.net/logopedia/images/3/36/Settings-visionOS.png/revision/latest/scale-to-width-down/128?cb=20250408165303",
+          title: "Settings",
+          onClick: () => this.openSettings()
+        }
+      ]
+    };
+  }
+
+  /* ─────────────────────────────
+   *  PUBLIC API (Taskbar / Launcher)
+   * ───────────────────────────── */
+
+  toggle() {
+    // ── Create ──
+    if (!this.window) {
+      this._create();
+      return;
+    }
+
+    // ── Toggle ──
+    if (this.window.isMinimized) {
+      this.window.restoreWindow();
+    } else {
+      this.window.minimizeWindow();
+    }
+  }
+
+  /* ─────────────────────────────
+   *  INTERNAL
+   * ───────────────────────────── */
+
+  _create() {
+    this.window = new core.wdm.Current(this.config);
+
+    this.window.setContent(`
+      <div style="padding:20px">
+        <h1>Hello from MyApp 👋</h1>
+        <p>This app uses Modern WDM</p>
+      </div>
+    `);
+
+    // ── Bridge window → taskbar ──
+    this.window.onStateChange = (state) => {
+      core.taskbar.updateAppState("myapp", state);
+
+      if (state === "closed") {
+        this.window = null;
+      }
+    };
+
+    core.taskbar.updateAppState("myapp", "open");
+  }
+
+  /* ─────────────────────────────
+   *  APP ACTIONS
+   * ───────────────────────────── */
+
+  refresh() {
+    console.log("Refresh clicked");
+  }
+
+  openSettings() {
+    console.log("Settings clicked");
+  }
 }
-// Crear Contenido
-const Content = '<p>Hello World!</p>'
+const myApp = new MyApp();
 
-// crear ventana y Registrar en el dock
-const MyWin = new CoreWindow(App);
-MyWin.minimizeWindow();
+core.taskbar.addApp({
+  id: "myapp",
+  name: "MyApp",
+  icon: "Assets/Mint.png",
+  title: "My App",
 
-MyWin.setContent(Content)
-iconMan.addApp(App.name, App.icon, MyWin);
+  executeType: "function",
+  execute: () => myApp.toggle(),
+
+  windowType: "Modern",
+
+  thumbnailPreview: true,
+  mediaControl: false,
+
+  pinned: true,
+  category: "utilities"
+});
