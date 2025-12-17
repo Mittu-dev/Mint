@@ -7,6 +7,7 @@ import { Journal } from "./Journal.js";
 import { SPL } from "./PKG.js";
 import { Mixer, MixerUI } from "./Mixer.js";
 import { FileSystem } from "./Filesystem.js";
+import { NotificationManager } from "./NotificationManager.js";
 
 
 
@@ -18,20 +19,25 @@ const $$ = s => Array.from(document.querySelectorAll(s));
 
 
 // System Wire
-let CORE_DOCK = new System.Dock();
+let taskbar = new System.Taskbar();
 let CORE_WDM = System.WDM;
+let MintWDM = System.MWDM;
 let Network = new System.NetworkManager((e)=>{Service(e) });
 let SystemPanic = System.KernelPanic;
+let Notifications = new NotificationManager();
 let SE = {};
 let Enforcer;
 let CORE_SECURITY_POLICY = {};
 let SECloud;
 let MixerTray;
 
-// Apis Publicas "window.CORE"
+// Apis Publicas "window.core"
 let CS_API = {
-    CORE_DOCK,
-    CORE_WDM,
+    taskbar,
+    wdm: {
+        "Legacy": CORE_WDM,
+        "Current": MintWDM
+    },
     Snap,
     SnapSDK,
     Journal,
@@ -40,7 +46,8 @@ let CS_API = {
     Mixer,
     Services,
     AccountService,
-    Storage
+    Storage,
+    Notifications
 };
 
 // Helpers
@@ -65,7 +72,7 @@ function Service(d){
 async function Fastboot() {
     try {
         Journal.add('[BOOT] Loading kernel', 1);
-            window.CORE = CS_API;            
+            window.core = CS_API;            
             await Boot();
     } catch (error) {
         SystemPanic.trigger('BOOT_FATAL');
@@ -246,14 +253,14 @@ class SecurityModule {
     #init() {
         if (this.Context.SEMode === 'Enforced') {
             Journal.add('[SECore] Enforced mode enabled', 90);
-            CORE.Kernel = '[SECore] Kernel access restricted';
+            core.Kernel = '[SECore] Kernel access restricted';
         } else {
             Journal.add('[SECore] Permissive mode enabled', 90);
-            CORE.Kernel = System;
+            core.Kernel = System;
         }
 
         // 🌐 API pública de seguridad
-        CORE.SE = {
+        core.SE = {
             currentMode: () => this.getCurrentMode(),
             bindedKernel: () => this.isEnabled(),
             getToken: (t) => this.getToken(t),

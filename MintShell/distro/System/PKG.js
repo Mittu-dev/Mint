@@ -54,7 +54,7 @@ class AddonLoader {
 
     // ─── Execute addon ───────────────────────
     return module.default({
-      CORE,
+      core,
       fs: this.fs,
       manifest
     });
@@ -63,11 +63,11 @@ class AddonLoader {
 
 class MBP {
   constructor() {
-    this.fs = CORE?.fs ?? new FileSystem();
+    this.fs = core?.fs ?? new FileSystem();
     this.ready = Promise.resolve(true);
     this.loader = new AddonLoader({
       fs: this.fs,
-      secore: CORE?.SE
+      secore: core?.SE
     });
 
     this.registerCommands();
@@ -121,8 +121,8 @@ async function SPL() {
     Journal.add("[SPL] Package subsystem ready", 1);
 
     // Exponer a CORE (como antes)
-    if (!window.CORE) window.CORE = {};
-    CORE.MBP = MBP_INSTANCE;
+    if (!window.core) window.core = {};
+    core.MBP = MBP_INSTANCE;
 
     Journal.add("[SPL] SPL initialization complete", 1);
     return true;

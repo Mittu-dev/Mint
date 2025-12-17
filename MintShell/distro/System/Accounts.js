@@ -117,8 +117,8 @@ static async OfflineSignup(user, password){
     });
     
     Snap.Scheduler.delay(() => {
-        if (window.CORE?.Services) {
-            CORE.Services();
+        if (window.core?.Services) {
+            core.Services();
         }
     }, 2000);
 }
@@ -277,6 +277,7 @@ class AccountManager {
         Snap.Scheduler.delay(() => {
             loading.kill()
             $('.CM-login').classList.toggle('hidden');
+            $('.status').classList.add('hidden');
             $('.desktop').classList.toggle('hidden');
             $('.user').textContent = AccountManager.CurrentUser.User.displayName;
         }, 4500)
@@ -306,6 +307,7 @@ class AccountManager {
 
     static Logout() {
         AccountManager.CurrentUser = {}
+        $('.status').classList.remove('hidden');
         $('.CM-login').classList.remove('forbidden');
         $('.CM-login').classList.toggle('hidden');
         $('.desktop').classList.toggle('hidden');

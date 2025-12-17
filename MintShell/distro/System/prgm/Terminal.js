@@ -2,7 +2,7 @@ let TermAPI;
 var TermSE;
 let CurrentUser;
 
-import { WDM, CoreVer } from "../CloudBase.js";
+import { MWDM, CoreVer } from "../CloudBase.js";
 import { Journal } from "../Journal.js";
 
 let Commands = {
@@ -341,7 +341,7 @@ class bashHistory {
     }
 }
 
-class TermWindow extends WDM {
+class TermWindow extends MWDM {
     constructor(config) {
         super(config);
     }
@@ -376,7 +376,7 @@ function Terminit() {
     TermWDM.updateEnforcedView();
     //TermWDM.minimizeWindow();
 
-    CORE.CORE_DOCK.addApp(MainWindow.name, MainWindow.icon, TermWDM);
+    CORE.Dock.addApp(MainWindow.name, MainWindow.icon, TermWDM);
 
     let getUser;
     CORE.SE.modFunc('NovaAccounts', 'getCurrentUser', (e) =>{

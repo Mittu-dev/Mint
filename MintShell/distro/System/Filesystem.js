@@ -285,8 +285,8 @@ class FileSystem {
   }
 
   #expose() {
-    if (!window.CORE) window.CORE = {};
-    window.CORE.fs = this;
+    if (!window.core) window.core = {};
+    window.core.fs = this;
   }
 
   info() {

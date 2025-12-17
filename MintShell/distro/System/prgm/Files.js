@@ -1,9 +1,9 @@
 // Mint Explorer (v2 clean)
-import { WDM } from "../CloudBase.js";
+import { MWDM } from "../CloudBase.js";
 import { CommandManager } from "./Terminal.js";
 import { Journal } from "../Journal.js";
 
-class MintExplorerWM extends WDM {
+class MintExplorerWM extends MWDM {
 
   constructor(config){
     super(config);
@@ -49,7 +49,7 @@ class MintExplorer {
     Journal.add('[Explorer] Initializing');
 
     this.window = new MintExplorerWM(this.config);
-    CORE.CORE_DOCK.addApp(this.config.id, this.config.icon, this.window);
+    CORE.Dock.addApp(this.config.id, this.config.icon, this.window);
     this.window.minimizeWindow();
 
     this.createUI();

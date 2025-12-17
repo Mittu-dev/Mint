@@ -100,6 +100,30 @@ input:-webkit-autofill:active{
     transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+.taskbar-preview {
+  position: fixed;
+  bottom: 64px;
+  width: 280px;
+  background: rgba(20,20,20,.95);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.7);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.preview-title {
+  font-size: 0.85rem;
+  opacity: .7;
+  margin-bottom: 6px;
+}
+
+.taskbar-preview canvas {
+  width: 100%;
+  border-radius: 8px;
+}
+
+
 /* Efecto de escala al hacer hover en el dock */
 /* ICONOS DEL DOCK */
 .dot_icon {
@@ -309,6 +333,16 @@ input:-webkit-autofill:active{
     box-shadow: none;
 }
 
+.window-titlebar {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  background: #2a2a2a;
+  user-select: none;
+}
+
 .window-titlebar:active {
     cursor: grabbing;
 }
@@ -326,6 +360,21 @@ input:-webkit-autofill:active{
     border: none;
     cursor: pointer;
     padding: 0;
+}
+
+.window-titlebar.centered {
+  justify-content: center;
+}
+
+.window-titlebar.centered .title-right {
+  position: absolute;
+  right: 8px;
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .window-titlebar .close, .window-titlebar .minimize, .window-titlebar .maximize {
@@ -355,6 +404,51 @@ input:-webkit-autofill:active{
     font-size: 13px;
     margin-left: 10px;
     flex: 1;
+}
+
+.window-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.title-right {
+  display: flex;
+  align-items: center;
+}
+
+.shortcuts {
+  display: inline-flex;
+  gap: 6px;
+  margin-right: 8px;
+}
+
+.window-shortcut {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: .8;
+}
+
+.window-shortcut img {
+  width: 14px;
+  height: 14px;
+}
+
+.window-shortcut:hover {
+  opacity: 1;
+}
+
+.controls button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.window-content {
+  height: calc(100% - 36px);
+  background: #181818;
 }
 
 /* === Content Area === */

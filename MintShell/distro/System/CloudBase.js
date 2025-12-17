@@ -1,84 +1,193 @@
 import {AppCertificateGenerator} from './Apparmor.js';
 import { Journal } from "./Journal.js";
-class Dock {
-    constructor(dockStart = ".dock") {
-        this.dockContainer = document.querySelector(dockStart);
-        if (!this.dockContainer) {
-            this.dockContainer = document.createElement("div");
-            this.dockContainer.className = "shortcuts";
-            document.body.appendChild(this.dockContainer);
-        }
-        this.apps = {}; // Guarda las ventanas asociadas a los iconos
-    }
 
-    addShortcutName(shortcutName, name) {
-        if (!shortcutName) return;
-        if (!name) return;
+// Mint Dock
+class AppRegistry {
+  constructor() {
+    this.apps = new Map();
+  }
 
-        const App = document.querySelector(shortcutName);
-        App.title = name;
-    }
+  register(app) {
+    if (!app.id) throw new Error("App must have id");
+    this.apps.set(app.id, {
+      ...app,
+      state: "idle", // idle | open | minimized
+      instance: null
+    });
+  }
 
-    addApp(name, iconPath, windowInstance) {
-        if (this.apps[name]) return;
+  get(id) {
+    return this.apps.get(id);
+  }
 
-        const appIcon = document.createElement("div");
-        appIcon.className = "dot_icon appopen " + name;
-        appIcon.innerHTML = `<div title="${name}"></div>`;
-        appIcon.style.backgroundImage = `url(${iconPath})`;
-
-        // Indicador de estado
-        const statusIndicator = document.createElement("div");
-        statusIndicator.className = "app-status-indicator"; // Estilo CSS
-        appIcon.appendChild(statusIndicator);
-
-        appIcon.addEventListener("click", () => {
-            if (windowInstance.isMinimized) {
-                windowInstance.restoreWindow();
-                appIcon.classList.remove("minimized");
-            } else {
-                windowInstance.minimizeWindow();
-                appIcon.classList.add("minimized");
-            }
-        });
-
-        this.dockContainer.appendChild(appIcon);
-        this.apps[name] = { icon: appIcon, window: windowInstance };
-
-        this.addShortcutName(`.${name}`, name)
-
-        // Agregar clases de estado
-        windowInstance.onStateChange = (state) => {
-            if (state === "open") {
-                appIcon.classList.add("active");
-                appIcon.classList.remove("minimized");
-            } else if (state === "minimized") {
-                appIcon.classList.add("minimized");
-            } else if (state === "closed") {
-                appIcon.classList.remove("active", "minimized"); // 🔹 Quita todas las clases
-            }
-        };
-    }
-
-    removeApp(name) {
-        if (this.apps[name]) {
-            this.apps[name].icon.className = "dot_icon appclose";
-            setTimeout(() => {
-                this.apps[name].icon.remove();
-                delete this.apps[name];
-            }, 190);
-        }
-    }
+  setState(id, state) {
+    const app = this.apps.get(id);
+    if (app) app.state = state;
+  }
 }
+class TaskbarShortcuts {
+  constructor(registry) {
+    this.registry = registry;
+    this.container = document.querySelector(".dock");
+    this.icons = new Map();
+  }
+
+  add(appId) {
+    const app = this.registry.get(appId);
+    if (!app || this.icons.has(appId)) return;
+
+    const icon = document.createElement("div");
+    icon.className = "taskbar-icon dot_icon";
+    icon.style.backgroundImage = `url(${app.icon})`;
+    icon.title = app.title;
+
+    const indicator = document.createElement("div");
+    indicator.className = "app-status-indicator";
+    icon.appendChild(indicator);
+
+
+    icon.addEventListener("click", () => {
+      app.execute();
+    });
+
+    icon.addEventListener("mouseenter", () => {
+      if (app.thumbnailPreview && app.windowType === "Modern") {
+        PreviewManager.show(appId, icon);
+      }
+    });
+
+    icon.addEventListener("mouseleave", () => {
+      PreviewManager.hide(appId);
+    });
+
+    this.container.appendChild(icon);
+    this.icons.set(appId, icon);
+  }
+
+updateState(appId, state) {
+  const icon = this.icons.get(appId);
+  if (!icon) return;
+
+  // Limpiar animaciones previas
+  icon.classList.remove("appopen", "appclose");
+
+  if (state === "open") {
+    icon.classList.add("active", "appopen");
+    icon.classList.remove("minimized");
+  }
+
+  else if (state === "minimized") {
+    icon.classList.add("minimized");
+    icon.classList.remove("active");
+  }
+
+  else if (state === "closed") {
+    icon.classList.add("appclose");
+    icon.classList.remove("active", "minimized");
+
+    // Opcional: quitar tras animación
+    setTimeout(() => {
+      icon.classList.remove("appclose");
+    }, 200);
+  }
+}
+
+}
+class AppLauncher {
+  constructor(registry) {
+    this.registry = registry;
+  }
+
+  add(appId, regShortcut = false) {
+    const app = this.registry.get(appId);
+    if (!app) return;
+
+    // menú / grid por categorías
+    if (regShortcut) {
+      this.createDesktopShortcut(app);
+    }
+  }
+
+  createDesktopShortcut(app) {
+    // opcional
+  }
+}
+class PreviewManager {
+  static current = null;
+  static registry = null; // se inyecta una vez
+
+  static init(registry) {
+    this.registry = registry;
+  }
+
+  static async show(appId, anchorEl) {
+    if (!this.registry) return;
+
+    const app = this.registry.get(appId);
+    if (!app) return;
+
+    this.hide();
+
+    const preview = document.createElement("div");
+    preview.className = "taskbar-preview";
+
+    const title = document.createElement("div");
+    title.className = "preview-title";
+    title.textContent = app.title || app.name;
+
+    preview.appendChild(title);
+
+    // ── Snapshot ──
+    if (app.window?.getSnapshot) {
+      const canvas = await app.window.getSnapshot();
+      if (canvas) preview.appendChild(canvas);
+    }
+
+    document.body.appendChild(preview);
+
+    const r = anchorEl.getBoundingClientRect();
+    preview.style.left = `${r.left}px`;
+    preview.style.bottom = `64px`;
+
+    this.current = preview;
+  }
+
+  static hide() {
+    if (this.current) {
+      this.current.remove();
+      this.current = null;
+    }
+  }
+}
+
+class Taskbar {
+  constructor() {
+    this.registry = new AppRegistry();
+    this.launcher = new AppLauncher(this.registry);
+    this.shortcuts = new TaskbarShortcuts(this.registry);
+    PreviewManager.init(this.registry);
+  }
+
+  addApp(config) {
+    this.registry.register(config);
+    if (config.pinned) {
+      this.shortcuts.add(config.id);
+    }
+  }
+
+  registerApptoLauncher(config) {
+    this.registry.register(config);
+    this.launcher.add(config.id, config.regShortcut);
+  }
+
+  updateAppState(appId, state) {
+    this.registry.setState(appId, state);
+    this.shortcuts.updateState(appId, state);
+  }
+}
+
+// Mint Window Manager Legacy
 class WDM {
-    /**
-     * constructor(containerOrConfig, maximizedOrUndefined)
-     * - containerOrConfig: puede ser:
-     *    * selector string (ej. "#mywin") -> si no existe crea el DOM
-     *    * DOM element -> usa directamente
-     *    * objeto config -> { id, name, left, top, width, height, icon, startMinimized }
-     * - maximizedOrUndefined: legacy boolean para noMaximize (si lo pasas)
-     */
     constructor(containerOrConfig = {}, maximizedOrUndefined = false) {
         // support legacy signature: (selectorString, maximized)
         this.noMaximize = !!maximizedOrUndefined;
@@ -91,6 +200,7 @@ class WDM {
         this.maximized = false;
         this.prevSize = null;
         this.prevPos = null;
+        this.contentEl = null;
 
         // interpret containerOrConfig
         if (typeof containerOrConfig === 'string') {
@@ -241,6 +351,12 @@ this.config = Object.assign({
         const content = this.container.querySelector(".window-content");
         if (!content) return;
         content.innerHTML = html;
+        this.contentEl = this.container.querySelector('.window-content');
+        return this.contentEl;
+    }
+
+    getContent(){
+        return this.contentEl;
     }
 
     appendContent(node) {
@@ -452,6 +568,251 @@ restoreWindow() {
             this.container.removeEventListener("mousedown", this._bringPointerDown);
         } catch (e) { }
     }
+}
+
+// Mint Window Manager
+class MWDM {
+  constructor(containerOrConfig = {}, maximizedOrUndefined = false) {
+    this.noMaximize = !!maximizedOrUndefined;
+    this.isDragging = false;
+    this.isResizing = false;
+    this.isMinimized = false;
+    this.maximized = false;
+    this.prevSize = null;
+    this.prevPos = null;
+    this.dockInstance = null;
+    this.onStateChange = null;
+    this.contentEl = null;
+
+    // ─── CONFIG ──────────────────────────────
+    this.config = Object.assign({
+      id: null,
+      name: 'App',
+      width: 480,
+      height: 320,
+      minWidth: 200,
+      minHeight: 120,
+      icon: null,
+      titleAlign: 'left',      // left | center
+      titleIcon: null,         // icono antes del título
+      shortcuts: []            // botones extra junto a handlers
+    }, typeof containerOrConfig === 'object' ? containerOrConfig : {});
+
+    // ─── CREAR / RESOLVER CONTENEDOR ─────────
+    if (typeof containerOrConfig === 'string') {
+      let el = document.querySelector(containerOrConfig);
+      if (!el) {
+        el = this._createWindowElement();
+        document.querySelector('.desktop').appendChild(el);
+      }
+      this.container = el;
+    } else if (containerOrConfig instanceof Element) {
+      this.container = containerOrConfig;
+    } else if (typeof containerOrConfig === 'object') {
+      let el = document.getElementById(this.config.id);
+      if (!el) {
+        el = this._createWindowElement();
+        document.querySelector('.desktop').appendChild(el);
+      }
+      this.container = el;
+    } else {
+      throw new Error('WDM: parámetro inválido');
+    }
+
+    this.WDM_Name = this.config.name;
+    this.init();
+  }
+
+  _emitState(state) {
+  if (typeof this.onStateChange === "function") {
+    this.onStateChange(state);
+  }
+}
+
+  _createWindowElement() {
+    const el = document.createElement('div');
+    el.className = 'window';
+    el.id = this.config.id || `cw-${Date.now()}`;
+    el.style.width = `${this.config.width}px`;
+    el.style.height = `${this.config.height}px`;
+    el.style.position = 'absolute';
+    el.style.left = '120px';
+    el.style.top = '120px';
+
+    el.innerHTML = `
+      <div class="window-titlebar ${this.config.titleAlign === 'center' ? 'centered' : ''}">
+        <div class="title-left">
+          ${this.config.titleIcon ? `<img class="window-icon" src="${this.config.titleIcon}">` : ''}
+          <span class="window-title-text">${this.config.name}</span>
+        </div>
+        <div class="title-right">
+          <span class="window-shortcuts"></span>
+          <span class="controls">
+            <button class="minimize">_</button>
+            <button class="maximize">▢</button>
+            <button class="close">×</button>
+          </span>
+        </div>
+      </div>
+      <div class="window-content"></div>
+    `;
+
+    return el;
+  }
+
+  init() {
+    this.titleBar = this.container.querySelector('.window-titlebar');
+    this.minimizeButton = this.container.querySelector('.minimize');
+    this.maximizeButton = this.container.querySelector('.maximize');
+    this.closeButton = this.container.querySelector('.close');
+    this.contentEl = this.container.querySelector('.window-content');
+
+    this._initShortcuts();
+    this.addEventListeners();
+  }
+
+  _initShortcuts() {
+    const shortcutsEl = this.container.querySelector('.window-shortcuts');
+    if (!shortcutsEl || !this.config.shortcuts?.length) return;
+
+    this.config.shortcuts.forEach(sc => {
+      const btn = document.createElement('button');
+      btn.className = 'window-shortcut';
+      btn.title = sc.title || '';
+      btn.innerHTML = sc.icon
+        ? `<img src="${sc.icon}">`
+        : (sc.text || '•');
+
+      if (typeof sc.onClick === 'function') {
+        btn.addEventListener('click', sc.onClick);
+      }
+      shortcutsEl.appendChild(btn);
+    });
+  }
+
+  addEventListeners() {
+    this.minimizeButton?.addEventListener('click', () => this.minimizeWindow());
+    this.maximizeButton?.addEventListener('click', () => this.maximizeWindow());
+    this.closeButton?.addEventListener('click', () => this.closeWindow());
+
+    this.titleBar?.addEventListener('mousedown', e => this.startDrag(e));
+    document.addEventListener('mousemove', e => this.dragWindow(e));
+    document.addEventListener('mouseup', () => this.stopDrag());
+
+    this.container.addEventListener('mousedown', () => this.bringToFront());
+  }
+
+setContent(content) {
+  this.contentEl.innerHTML = "";
+
+  if (content instanceof Element) {
+    this.contentEl.appendChild(content);
+  } else {
+    this.contentEl.innerHTML = content;
+  }
+
+  return this.contentEl;
+}
+
+getContent() {
+  return this.contentEl;
+}
+
+async getSnapshot() {
+  const el = this.getContent();
+  if (!el) return null;
+
+  // html2canvas o equivalente
+  return await html2canvas(el, {
+    backgroundColor: null,
+    scale: 0.25
+  });
+}
+
+
+  startDrag(e) {
+    if (this.maximized) return;
+    this.isDragging = true;
+    const rect = this.container.getBoundingClientRect();
+    this.offsetX = e.clientX - rect.left;
+    this.offsetY = e.clientY - rect.top;
+  }
+
+  dragWindow(e) {
+    if (!this.isDragging) return;
+    this.container.style.left = `${e.clientX - this.offsetX}px`;
+    this.container.style.top = `${e.clientY - this.offsetY}px`;
+  }
+
+  stopDrag() {
+    this.isDragging = false;
+  }
+
+minimizeWindow() {
+  this.container.style.display = "none";
+  this.isMinimized = true;
+  this._emitState("minimized");
+}
+
+  maximizeWindow() {
+    if (this.noMaximize) return;
+    if (!this.maximized) {
+      const r = this.container.getBoundingClientRect();
+      this.prevSize = { w: r.width, h: r.height };
+      this.prevPos = { l: r.left, t: r.top };
+      this.container.style.left = '0';
+      this.container.style.top = '0';
+      this.container.style.width = '100vw';
+      this.container.style.height = '100vh';
+      this.maximized = true;
+    } else {
+      this.restoreWindow();
+    }
+  }
+
+ restoreWindow() {
+  // ── Si estaba minimizada ──
+  if (this.isMinimized) {
+    this.container.style.display = "block";
+    this.isMinimized = false;
+    this._emitState("open");
+    return;
+  }
+
+  // ── Si estaba maximizada ──
+  if (this.prevSize && this.prevPos) {
+    this.container.style.width = `${this.prevSize.w}px`;
+    this.container.style.height = `${this.prevSize.h}px`;
+    this.container.style.left = `${this.prevPos.l}px`;
+    this.container.style.top = `${this.prevPos.t}px`;
+    this.maximized = false;
+    this._emitState("open");
+  }
+}
+
+
+closeWindow() {
+  this._emitState("closed");
+
+  if (this.dockInstance) {
+    this.dockInstance.notifyClosed(this.WDM_Name);
+  }
+
+  this.container.remove();
+}
+
+
+  bringToFront() {
+    const wins = document.querySelectorAll('.window');
+    let maxZ = 0;
+    wins.forEach(w => maxZ = Math.max(maxZ, parseInt(w.style.zIndex) || 0));
+    this.container.style.zIndex = maxZ + 1;
+  }
+
+attachToDock(dock) {
+  this.dockInstance = dock;
+}
+
 }
 
 class ErrorManager {
@@ -1747,8 +2108,9 @@ export {
     SECore,
     CoreVer,
     KernelPanic,
-    Dock,
+    Taskbar,
     WDM,
+    MWDM,
     ErrorManager,
     PasswordHasher,
     NetworkManager,
